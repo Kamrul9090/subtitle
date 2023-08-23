@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 const SignUp = () => {
-    const { createUser } = useContext(AuthContext);
+    const { createUser, userProfile, emailVerification } = useContext(AuthContext);
     const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
 
     const [customError, setCustomError] = useState({
@@ -13,17 +13,30 @@ const SignUp = () => {
 
     const onSubmit = data => {
         console.log(data);
+        const profile = {
+            displayName: data.name,
+        }
         createUser(data.email, data.password)
             .then((result) => {
                 const user = result.user;
                 console.log(user);
-                setCustomError({ ...customError, loginError: "" })
+                if (user) {
+                    setCustomError({ ...customError, loginError: "" });
+                    userProfile(profile)
+                    emailVerification()
+                        .then(() => {
+
+                        })
+                    reset();
+                }
             })
             .catch((error) => {
                 console.log(error);
-                setCustomError({ ...customError, loginError: "email already exist" })
+                if (error) {
+                    setCustomError({ ...customError, loginError: "email already exist" })
+                }
             })
-        reset();
+
     }
 
     return (
@@ -65,12 +78,12 @@ const SignUp = () => {
                                     }
                                 }
                             })}
-                            type="confirm" name="confirm" placeholder="Confirm password" className="max-w-full p-2 outline-none hover:shadow-md rounded-md" />
+                            type="password" name="confirm" placeholder="Confirm password" className="max-w-full p-2 outline-none hover:shadow-md rounded-md" />
                         {errors?.confirm && <small role="alert" className="text-warning">{errors?.confirm.message}</small>}
                     </div>
                     <div className="w-full my-2">
                         <button type="submit" className="text-white bg-primary hover:bg-secondary p-2 w-full text-xs lg:text-sm rounded-md">Sign Up</button>
-                        {customError?.loginError && <small role="alert" className="text-warning">{customError.loginError}</small>}
+                        {customError?.loginError !== "" && <small role="alert" className="text-warning">{customError.loginError}</small>}
                     </div>
                 </form>
                 <div className="mx-2">

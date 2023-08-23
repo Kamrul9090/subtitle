@@ -2,17 +2,33 @@
 import { AuthContext } from "@/context/AuthProvider";
 import { FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
 import Link from "next/link";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-
+import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 const Login = () => {
     const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
-    const { SignIn } = useContext(AuthContext);
+    const { signInEmailPassword, SignIn, resetPassword, loader } = useContext(AuthContext);
+    const router = useRouter();
     const googleProvider = new GoogleAuthProvider();
     const facebookProvider = new FacebookAuthProvider();
+    const [customError, setCustomError] = useState({
+        errorMessage: ""
+    })
 
     const onSubmit = data => {
         console.log(data);
+        signInEmailPassword(data.email, data.password)
+            .then((result) => {
+                const user = result.user;
+                console.log(user);
+                setCustomError({ ...customError, errorMessage: "" })
+            })
+            .catch(error => {
+                if (error) {
+                    setCustomError({ ...customError, errorMessage: "your password is wrong" })
+                }
+            })
         reset();
     }
 
@@ -20,7 +36,9 @@ const Login = () => {
         SignIn(googleProvider)
             .then(result => {
                 const user = result.user;
-                console.log(user);
+                if (user) {
+                    router.push('/')
+                }
             })
             .catch(error => {
                 console.log(error);
@@ -47,15 +65,19 @@ const Login = () => {
                                 }
                             })} type="password" name="password" placeholder="password" className="max-w-full p-2 outline-none hover:shadow-md rounded-md" />
                         {errors?.password && <small role="alert" className="text-warning">{errors?.password.message}</small>}
-                        <a className="text-primary hover:text-secondary" href="http://" target="_blank"><u><small>Forgot Password</small></u></a>
+                        <Link href="/login/reset_password" target="_blank"><u><small className="text-primary hover:text-secondary">Forgot Password</small></u></Link>
                     </div>
+
                     <div className="w-full my-2">
                         <button type="submit" className="text-white bg-primary hover:bg-secondary p-2 w-full text-xs lg:text-sm rounded-md">Login</button>
+                        {customError?.errorMessage !== "" && <small role="alert" className="text-warning">{customError.errorMessage}</small>}
                     </div>
                 </form>
                 <div className="mx-2">
                     <div className="my-4">
-                        <button onClick={handleGoogleSignIn} type="button" className="text-white bg-primary hover:bg-secondary p-2 w-full text-xs lg:text-sm rounded-md">Login with google</button>
+                        <Suspense fallback={<p>loading...</p>}>
+                            <button onClick={handleGoogleSignIn} type="button" className="text-white bg-primary hover:bg-secondary p-2 w-full text-xs lg:text-sm rounded-md">Login with google</button>
+                        </Suspense>
                     </div>
                     <div>
                         <button type="button" className="text-white bg-primary hover:bg-secondary p-2 w-full text-xs lg:text-sm rounded-md">Login with Facebook</button>
@@ -64,8 +86,8 @@ const Login = () => {
                         <span>I have no account yet.</span><Link href="/signup"><span className="text-primary hover:text-secondary"><u>Sign Up</u></span></Link>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

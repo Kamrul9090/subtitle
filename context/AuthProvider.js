@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useEffect, useState } from "react";
-import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth'
 import app from "@/firebase/firebase.module";
 export const AuthContext = createContext(null);
 const auth = getAuth(app);
@@ -35,6 +35,18 @@ const AuthProvider = ({ children }) => {
         return updateProfile(auth.currentUser, profile)
     }
 
+    // send a user verification email
+    const emailVerification = () => {
+        setLoader(true);
+        return sendEmailVerification(auth.currentUser)
+    }
+
+    // resetPassword
+
+    const resetPassword = (email) => {
+        setLoader(true)
+        return sendPasswordResetEmail(auth, email);
+    }
     // Users
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, currentUser => {
@@ -53,6 +65,8 @@ const AuthProvider = ({ children }) => {
         logOut,
         createUser,
         userProfile,
+        emailVerification,
+        resetPassword,
         signInEmailPassword
     };
     return (
